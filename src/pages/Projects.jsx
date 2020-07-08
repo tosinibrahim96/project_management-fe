@@ -1,74 +1,193 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { getAll } from "../services/projects";
+import React, { useState } from "react";
+import {
+  useGetAllProjects,
+  useCreateNewProject,
+} from "../services/projects/projectsState";
+import {
+  Loader,
+  ProjectCard,
+  PageTitleAndButton,
+  ModalContainer,
+  FormInput,
+} from "../components";
+import { Container, Row, Button, Form, ListGroup } from "react-bootstrap";
+import { Redirect } from "react-router-dom";
 
-const Projects = () => {
-  const [projectsInfo, setProjectsInfo] = useState({});
+const Projects = (props) => {
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  const [newProjectState, createProject] = useCreateNewProject();
+  const [newProject, setNewProject] = useState({
+    name: "",
+    description: "",
+    amount_received: "0",
+    amount_expected: "0",
+  });
 
-  useEffect(() => {
-    const getAllProjects = async () => {
-      const allProjects = await getAll();
-      if (allProjects.status) {
-        setProjectsInfo(allProjects);
-        console.log(allProjects);
-      } else {
-        console.log("info :>> ", allProjects.message);
-      }
+  const data = useGetAllProjects();
+  const handleCloseAddProject = () => setShowAddProjectModal(false);
+  const handleShowAddProject = () => setShowAddProjectModal(true);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    createProject(newProject);
+  };
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    const newProjectData = {
+      ...newProject,
+      [name]: value,
     };
-    getAllProjects();
-  }, []);
 
-  if (projectsInfo.status) {
-    const {
-      data: { data: projects },
-    } = projectsInfo;
+    setNewProject(newProjectData);
+  };
 
-    return projects.map((project) => (
-      <div className="container" key={project.id}>
-        <div className="card mb-3">
-          <div className="row no-gutters">
-            <div className="col-md-8">
-              <div className="card-body">
-                <h5 className="card-title">{project.name}</h5>
-                <p className="card-text">{project.description}</p>
-                <p className="card-text">
-                  <small className="text-muted">
-                    Payment completed:{" "}
-                    {`${Math.floor(
-                      (project.last_payment.amount_received * 100) /
-                        project.amount_expected
-                    )} %`}{" "}
-                  </small>
-                </p>
-                <p className="card-text">
-                  <small className="text-muted">
-                    {" "}
-                    Task completed:{" "}
-                    {project.total_tasks < 1
-                      ? "No tasks yet"
-                      : isNaN(
-                          (project.completed_tasks * 100) / project.total_tasks
-                        )
-                      ? `0 %`
-                      : `${Math.floor(
-                          (project.completed_tasks * 100) / project.total_tasks
-                        )} %`}{" "}
-                  </small>
-                </p>
-                <Link
-                  to={`/projects/${project.id}`}
-                  className="btn btn-primary"
-                >
-                  Go somewhere
-                </Link>
-              </div>
-            </div>
-          </div>
+  const showErrors = () => {
+    const errorValue = newProjectState.error;
+
+    if (errorValue === "") {
+      return <></>;
+    }
+
+    if (errorValue !== "" && errorValue.message.errors) {
+      return (
+        <ListGroup>
+          {errorValue.message.errors.map((error) => (
+            <ListGroup.Item variant="danger" key={error} className="mt-2 mb-2">
+              {error}
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      );
+    }
+
+    if (errorValue !== "" && errorValue.message) {
+      return (
+        <ListGroup>
+          <ListGroup.Item variant="danger" className="mb-2">
+            {errorValue.message}
+          </ListGroup.Item>
+        </ListGroup>
+      );
+    }
+  };
+
+  if (data.loading) {
+    return <Loader />;
+  }
+
+  if (!data.loading && data.error) {
+    const { error } = data;
+    console.log(error);
+    return (
+      <div className="container">
+        <div>
+          <h1>{error.Error ? error.Error : error.message}</h1>
         </div>
       </div>
-    ));
-  } else {
-    return <div>Loading</div>;
+    );
+  }
+
+  if (data.projectsDetails) {
+    const {
+      projectsDetails: { data: projects },
+    } = data;
+
+    return newProjectState.loading ? (
+      <Loader />
+    ) : newProjectState.projectsDetails.id ? (
+      <Redirect to={`/projects/${newProjectState.projectsDetails.id}`} />
+    ) : (
+      <Container>
+        <PageTitleAndButton
+          pageTitle="All projects"
+          buttonText="New project"
+          handleClick={handleShowAddProject}
+        />
+        <ModalContainer
+          handleShow={showAddProjectModal}
+          handleClose={handleCloseAddProject}
+          title="Create a new project"
+        >
+          {showErrors()}
+          <Form onSubmit={handleSubmit}>
+            <FormInput
+              type="text"
+              placeholder="Uber"
+              required={true}
+              name="name"
+              handleChange={handleInputChange}
+              value={newProject.name}
+              label="Project Name"
+            />
+            <FormInput
+              type="textarea"
+              placeholder="American multinational ride-hailing company offering services that include peer-to-peer ridesharing"
+              required={true}
+              name="description"
+              handleChange={handleInputChange}
+              value={newProject.description}
+              rows="3"
+              label="Project Description"
+            />
+            <FormInput
+              type="number"
+              placeholder="0"
+              required
+              name="amount_expected"
+              value={newProject.amount_expected}
+              handleChange={handleInputChange}
+              label="Total payment expected"
+            />
+
+            <FormInput
+              type="number"
+              placeholder="0"
+              required
+              name="amount_received"
+              value={newProject.amount_received}
+              handleChange={handleInputChange}
+              label="Total confirmed payment"
+            />
+
+            <Button variant="primary" type="submit">
+              Submit
+            </Button>
+          </Form>
+        </ModalContainer>
+        <Row className="mt-4">
+          {projects.map((project) => {
+            const completedPayment = isNaN(
+              (project.last_payment.amount_received * 100) /
+                project.amount_expected
+            )
+              ? 0
+              : Math.floor(
+                  (project.last_payment.amount_received * 100) /
+                    project.amount_expected
+                );
+
+            const completedTasks =
+              project.total_tasks < 1
+                ? "No tasks yet"
+                : isNaN((project.completed_tasks * 100) / project.total_tasks)
+                ? 0
+                : Math.floor(
+                    (project.completed_tasks * 100) / project.total_tasks
+                  );
+
+            return (
+              <ProjectCard
+                completedPayment={completedPayment}
+                completedTasks={completedTasks}
+                project={project}
+                key={project.id}
+              />
+            );
+          })}
+        </Row>
+      </Container>
+    );
   }
 };
 

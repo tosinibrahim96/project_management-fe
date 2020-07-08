@@ -2,20 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useGetDashboardInfo } from "../services/dashboard/dashboardState";
 import { Row, Col, Card, Container, Button } from "react-bootstrap";
-import { Loader } from "../components/Loader";
+import { Loader } from "../components";
 
 const Home = () => {
   const data = useGetDashboardInfo();
 
-  const {
-    dashboardInfo: {
-      name,
-      projects,
-      tasks,
-      total_amount_received,
-      total_amount_expected,
-    },
-  } = data;
+
 
   if (data.loading) {
     return <Loader />;
@@ -32,6 +24,18 @@ const Home = () => {
       </div>
     );
   }
+
+  if (data.dashboardInfo) {
+    const {
+      dashboardInfo: {
+        name,
+        projects,
+        tasks,
+        total_amount_received,
+        total_amount_expected,
+      },
+    } = data;
+
 
   return (
     <Container>
@@ -83,6 +87,7 @@ const Home = () => {
       </Row>
     </Container>
   );
+}
 };
 
 export default Home;
