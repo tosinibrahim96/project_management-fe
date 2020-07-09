@@ -2,7 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Col, Card, ProgressBar, Button } from "react-bootstrap";
 
-const ProjectCard = ({ completedPayment, completedTasks, project }) => {
+const ProjectCard = ({
+  completedPayment,
+  completedTasks,
+  project,
+  showDeleteModal,
+}) => {
   const bgcolors = ["secondary", "info", "dark", "primary", "warning"];
   return (
     <Col md={4} className="mt-3" key={project.id}>
@@ -39,6 +44,14 @@ const ProjectCard = ({ completedPayment, completedTasks, project }) => {
               View details
             </Button>
           </Link>
+          <Button
+            className="mt-4 ml-4"
+            variant="danger"
+            onClick={showDeleteModal}
+            datakey={project.id}
+          >
+            Delete
+          </Button>
         </Card.Body>
       </Card>
     </Col>

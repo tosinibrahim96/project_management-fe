@@ -16,4 +16,17 @@ const save = async (projectData) => {
   return response.data;
 };
 
-export { getAll, getOne, save };
+const update = async (projectId, projectData) => {
+  const response = await axios.put(
+    `${baseUrl}/projects/${projectId}`,
+    projectData
+  );
+  return response.data;
+};
+
+const remove = async (projectId) => {
+  const response = await axios.delete(`${baseUrl}/projects/${projectId}`);
+  return response.data;
+};
+
+export { getAll, getOne, save, update, remove };

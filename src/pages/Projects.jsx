@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   useGetAllProjects,
   useCreateNewProject,
+  useDeleteProject,
 } from "../services/projects/projectsState";
 import {
   Loader,
@@ -13,9 +14,13 @@ import {
 import { Container, Row, Button, Form, ListGroup } from "react-bootstrap";
 import { Redirect } from "react-router-dom";
 
-const Projects = (props) => {
+const Projects = () => {
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [newProjectState, createProject] = useCreateNewProject();
+  const [deletedProject, deleteProject] = useDeleteProject();
+  const [showDeleteProject, setShowDeleteProject] = useState(false);
+  const [dataKey, setDataKey] = useState("");
+
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -26,10 +31,21 @@ const Projects = (props) => {
   const data = useGetAllProjects();
   const handleCloseAddProject = () => setShowAddProjectModal(false);
   const handleShowAddProject = () => setShowAddProjectModal(true);
+  const handleCloseDeleteProject = () => setShowDeleteProject(false);
+  const handleShowDeleteProject = () => setShowDeleteProject(true);
+
+  const showDeleteModal = (event) => {
+    handleShowDeleteProject();
+    setDataKey(event.target.attributes.datakey.value);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     createProject(newProject);
+  };
+
+  const handleDeleteProject = (event) => {
+    deleteProject(dataKey);
   };
 
   const handleInputChange = (event) => {
@@ -42,8 +58,13 @@ const Projects = (props) => {
     setNewProject(newProjectData);
   };
 
-  const showErrors = () => {
-    const errorValue = newProjectState.error;
+  const showErrors = (type) => {
+    let errorValue;
+    if (type === "create") {
+      errorValue = newProjectState.error;
+    } else if (type === "delete") {
+      errorValue = deletedProject.error;
+    }
 
     if (errorValue === "") {
       return <></>;
@@ -78,7 +99,6 @@ const Projects = (props) => {
 
   if (!data.loading && data.error) {
     const { error } = data;
-    console.log(error);
     return (
       <div className="container">
         <div>
@@ -88,14 +108,16 @@ const Projects = (props) => {
     );
   }
 
+  const refreshPage = () => {
+    window.location.reload();
+  };
+
   if (data.projectsDetails) {
     const {
       projectsDetails: { data: projects },
     } = data;
 
-    return newProjectState.loading ? (
-      <Loader />
-    ) : newProjectState.projectsDetails.id ? (
+    return newProjectState.projectsDetails.id ? (
       <Redirect to={`/projects/${newProjectState.projectsDetails.id}`} />
     ) : (
       <Container>
@@ -103,58 +125,8 @@ const Projects = (props) => {
           pageTitle="All projects"
           buttonText="New project"
           handleClick={handleShowAddProject}
+          headerSize={1}
         />
-        <ModalContainer
-          handleShow={showAddProjectModal}
-          handleClose={handleCloseAddProject}
-          title="Create a new project"
-        >
-          {showErrors()}
-          <Form onSubmit={handleSubmit}>
-            <FormInput
-              type="text"
-              placeholder="Uber"
-              required={true}
-              name="name"
-              handleChange={handleInputChange}
-              value={newProject.name}
-              label="Project Name"
-            />
-            <FormInput
-              type="textarea"
-              placeholder="American multinational ride-hailing company offering services that include peer-to-peer ridesharing"
-              required={true}
-              name="description"
-              handleChange={handleInputChange}
-              value={newProject.description}
-              rows="3"
-              label="Project Description"
-            />
-            <FormInput
-              type="number"
-              placeholder="0"
-              required
-              name="amount_expected"
-              value={newProject.amount_expected}
-              handleChange={handleInputChange}
-              label="Total payment expected"
-            />
-
-            <FormInput
-              type="number"
-              placeholder="0"
-              required
-              name="amount_received"
-              value={newProject.amount_received}
-              handleChange={handleInputChange}
-              label="Total confirmed payment"
-            />
-
-            <Button variant="primary" type="submit">
-              Submit
-            </Button>
-          </Form>
-        </ModalContainer>
         <Row className="mt-4">
           {projects.map((project) => {
             const completedPayment = isNaN(
@@ -182,10 +154,90 @@ const Projects = (props) => {
                 completedTasks={completedTasks}
                 project={project}
                 key={project.id}
+                showDeleteModal={showDeleteModal}
               />
             );
           })}
         </Row>
+        <ModalContainer
+          handleShow={showAddProjectModal}
+          handleClose={handleCloseAddProject}
+          title="Create a new project"
+          footer={false}
+        >
+          {showErrors("create")}
+
+          {newProjectState.loading ? (
+            <Loader />
+          ) : (
+            <Form onSubmit={handleSubmit}>
+              <FormInput
+                type="text"
+                placeholder="Uber"
+                required={true}
+                name="name"
+                handleChange={handleInputChange}
+                value={newProject.name}
+                label="Project Name"
+              />
+              <FormInput
+                type="textarea"
+                placeholder="American multinational ride-hailing company offering services that include peer-to-peer ridesharing"
+                required={true}
+                name="description"
+                handleChange={handleInputChange}
+                value={newProject.description}
+                rows="3"
+                label="Project Description"
+              />
+              <FormInput
+                type="number"
+                placeholder="0"
+                required
+                name="amount_expected"
+                value={newProject.amount_expected}
+                handleChange={handleInputChange}
+                label="Total payment expected"
+              />
+
+              <FormInput
+                type="number"
+                placeholder="0"
+                required
+                name="amount_received"
+                value={newProject.amount_received}
+                handleChange={handleInputChange}
+                label="Total confirmed payment"
+              />
+
+              <Button variant="primary" type="submit">
+                Submit
+              </Button>
+            </Form>
+          )}
+        </ModalContainer>
+        {deletedProject.projectDetails.status ? (
+          refreshPage()
+        ) : (
+          <ModalContainer
+            handleShow={showDeleteProject}
+            handleClose={handleCloseDeleteProject}
+            title="Delete a Project"
+            footer={true}
+            leftButtonLabel="Close"
+            leftButtonVariant="secondary"
+            rightButtonLabel="Yes"
+            rightButtonVariant="danger"
+            handleClick={handleDeleteProject}
+          >
+            {showErrors("delete")}
+            {deletedProject.loading ? (
+              <Loader />
+            ) : (
+              <p>{`Are you sure you want to delete this project`}</p>
+            )}
+          </ModalContainer>
+        )}
       </Container>
     );
   }
