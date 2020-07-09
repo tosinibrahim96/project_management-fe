@@ -12,7 +12,7 @@ const getOne = async (projectId) => {
 };
 
 const save = async (projectData) => {
-  const response = await axios.post(`${baseUrl}/projects/`, projectData);
+  const response = await axios.post(`${baseUrl}/projects`, projectData);
   return response.data;
 };
 
