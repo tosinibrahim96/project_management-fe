@@ -8,10 +8,10 @@ const Loader = () => {
         style={{
           marginLeft: "50%",
           marginTop: "20%",
-          width: "5rem",
-          height: "5rem",
+          width: "2rem",
+          height: "2rem",
         }}
-        animation="border"
+        animation="border" variant="primary"
         role="status"
       />
     </Container>

@@ -76,7 +76,7 @@ const PaymentSection = ({ projectDetails }) => {
     <>
       <PageTitleAndButton
         pageTitle="Payment history"
-        buttonText="Update payment"
+        buttonText="Update"
         headerSize={3}
         topMargin={5}
         handleClick={handleShowUpdatePayment}

@@ -6,4 +6,14 @@ const save = async (newTask) => {
   return response.data;
 };
 
-export { save };
+const update = async (taskData) => {
+  const response = await axios.put(`${baseUrl}/tasks/${taskData.id}`, taskData);
+  return response.data;
+};
+
+const remove = async (taskId) => {
+  const response = await axios.delete(`${baseUrl}/tasks/${taskId}`);
+  return response.data;
+};
+
+export { save, update, remove };

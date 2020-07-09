@@ -58,13 +58,8 @@ const Projects = () => {
     setNewProject(newProjectData);
   };
 
-  const showErrors = (type) => {
-    let errorValue;
-    if (type === "create") {
-      errorValue = newProjectState.error;
-    } else if (type === "delete") {
-      errorValue = deletedProject.error;
-    }
+  const showErrors = () => {
+    const errorValue = newProjectState.error || deletedProject.error;
 
     if (errorValue === "") {
       return <></>;
@@ -165,7 +160,7 @@ const Projects = () => {
           title="Create a new project"
           footer={false}
         >
-          {showErrors("create")}
+          {showErrors()}
 
           {newProjectState.loading ? (
             <Loader />
@@ -222,7 +217,7 @@ const Projects = () => {
           <ModalContainer
             handleShow={showDeleteProject}
             handleClose={handleCloseDeleteProject}
-            title="Delete a Project"
+            title="Delete a project"
             footer={true}
             leftButtonLabel="Close"
             leftButtonVariant="secondary"
@@ -230,7 +225,7 @@ const Projects = () => {
             rightButtonVariant="danger"
             handleClick={handleDeleteProject}
           >
-            {showErrors("delete")}
+            {showErrors()}
             {deletedProject.loading ? (
               <Loader />
             ) : (

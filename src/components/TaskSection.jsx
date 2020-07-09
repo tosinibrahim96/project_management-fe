@@ -7,24 +7,46 @@ import {
   FormInput,
   Loader,
 } from "./index";
-import { useCreateNewTask } from "../services/tasks/tasksState";
+import {
+  useCreateNewTask,
+  useUpdateTask,
+  useDeletetask,
+} from "../services/tasks/tasksState";
 
 const TaskSection = ({ projectDetails }) => {
   const [showAddTaskModal, setshowAddTaskModal] = useState(false);
+  const [showDeleteTask, setShowDeleteTask] = useState(false);
   const [newTaskState, createTask] = useCreateNewTask();
+  const [deletedTask, deleteTask] = useDeletetask();
+  const [updatedTask, updateTask] = useUpdateTask();
   const [newTask, setNewTask] = useState({
     name: "",
     description: "",
     project_id: projectDetails.id,
     status: "pending",
   });
+  const [createOrUpdate, setCreateOrUpdate] = useState("Submit");
+  const [modalTitle, setModalTitle] = useState("");
+  const [dataKey, setDataKey] = useState("");
 
   const handleCloseAddTask = () => setshowAddTaskModal(false);
   const handleShowAddTask = () => setshowAddTaskModal(true);
+  const handleCloseDeleteTask = () => setShowDeleteTask(false);
+  const handleShowDeleteTask = () => setShowDeleteTask(true);
+
+  const showDeleteModal = (event) => {
+    handleShowDeleteTask();
+    setDataKey(event.target.attributes.datakey.value);
+  };
+
+  const handleDeleteTask = (event) => {
+    deleteTask(dataKey);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    createTask(newTask);
+    const operationType = event.target.attributes.name.value;
+    operationType === "Submit" ? createTask(newTask) : updateTask(newTask);
   };
 
   const handleInputChange = (event) => {
@@ -37,8 +59,40 @@ const TaskSection = ({ projectDetails }) => {
     setNewTask(newProjectData);
   };
 
+  const handleShowEdit = (event) => {
+    setCreateOrUpdate("Update");
+    setModalTitle("Update task details");
+    const taskToEdit = projectDetails.tasks.find((task) => {
+      return task.id === event.target.attributes.datakey.value;
+    });
+    const { name, description, status, id } = taskToEdit;
+    const projectUpdateData = {
+      ...newTask,
+      name,
+      description,
+      status,
+      id,
+    };
+    setNewTask(projectUpdateData);
+
+    handleShowAddTask();
+  };
+
+  const handleShowCreate = () => {
+    setCreateOrUpdate("Submit");
+    setModalTitle("Create a new task");
+    setNewTask({
+      name: "",
+      description: "",
+      project_id: projectDetails.id,
+      status: "pending",
+    });
+    handleShowAddTask();
+  };
+
   const showErrors = () => {
-    const errorValue = newTaskState.error;
+    const errorValue =
+      newTaskState.error || updatedTask.error || deletedTask.error;
 
     if (errorValue === "") {
       return <></>;
@@ -71,7 +125,9 @@ const TaskSection = ({ projectDetails }) => {
     window.location.reload();
   };
 
-  return newTaskState.taskDetails.status ? (
+  return newTaskState.taskDetails.status ||
+    updatedTask.taskDetails.status ||
+    deletedTask.taskDetails.status ? (
     refreshPage()
   ) : (
     <>
@@ -80,22 +136,26 @@ const TaskSection = ({ projectDetails }) => {
         buttonText="New task"
         headerSize={3}
         topMargin={5}
-        handleClick={handleShowAddTask}
+        handleClick={handleShowCreate}
       />
 
-      <TaskTable projectDetails={projectDetails} />
+      <TaskTable
+        projectDetails={projectDetails}
+        handleShowEdit={handleShowEdit}
+        handleShowDelete={showDeleteModal}
+      />
 
       <ModalContainer
         handleShow={showAddTaskModal}
         handleClose={handleCloseAddTask}
-        title="Create a new task"
+        title={modalTitle}
         footer={false}
       >
-        {showErrors()}
-        {newTaskState.loading ? (
+        {showErrors("create")}
+        {newTaskState.loading || updatedTask.loading ? (
           <Loader />
         ) : (
-          <Form onSubmit={handleSubmit}>
+          <Form onSubmit={handleSubmit} name={createOrUpdate}>
             <FormInput
               type="text"
               placeholder="New task"
@@ -130,9 +190,28 @@ const TaskSection = ({ projectDetails }) => {
               </Form.Control>
             </Form.Group>
             <Button variant="primary" type="submit">
-              Submit
+              {createOrUpdate}
             </Button>
           </Form>
+        )}
+      </ModalContainer>
+
+      <ModalContainer
+        handleShow={showDeleteTask}
+        handleClose={handleCloseDeleteTask}
+        title="Delete a task"
+        footer={true}
+        leftButtonLabel="Close"
+        leftButtonVariant="secondary"
+        rightButtonLabel="Yes"
+        rightButtonVariant="danger"
+        handleClick={handleDeleteTask}
+      >
+        {showErrors("delete")}
+        {deletedTask.loading ? (
+          <Loader />
+        ) : (
+          <p>{`Are you sure you want to delete this task`}</p>
         )}
       </ModalContainer>
     </>
