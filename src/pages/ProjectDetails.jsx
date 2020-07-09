@@ -1,17 +1,44 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useParams } from "react-router-dom";
-import { getOne } from "../services/projects";
-import { save } from "../services/tasks";
-import { Button, Modal, Form, Toast } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 
-const ProjectDetails = (props) => {
+import {
+  Loader,
+  TaskSection,
+  ProjectDetailsTop,
+  PaymentSection,
+} from "../components";
+import { useGetOneProject } from "../services/projects/projectsState";
+
+const ProjectDetails = () => {
   const { projectId } = useParams();
+  const project = useGetOneProject(projectId);
 
-  return (
-    <div>
-      <h1>Project detail: {projectId}</h1>
-    </div>
-  );
+  if (project.loading) {
+    return <Loader />;
+  }
+
+  if (!project.loading && project.error) {
+    const { error } = project;
+    return (
+      <div className="container">
+        <div>
+          <h1>{error.Error ? error.Error : error.message}</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (project.projectDetails) {
+    const { projectDetails } = project;
+    return (
+      <Container>
+        <ProjectDetailsTop projectDetails={projectDetails} />
+        <TaskSection projectDetails={projectDetails} />
+        <PaymentSection projectDetails={projectDetails} />
+      </Container>
+    );
+  }
 };
 
 export default ProjectDetails;

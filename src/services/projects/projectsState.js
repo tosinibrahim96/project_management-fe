@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from "react";
-import { getAll,save } from "./projectRequests";
+import { getAll, save, getOne, update, remove } from "./projectRequests";
 
 const initialState = {
   loading: true,
@@ -11,6 +11,24 @@ const createProjectInitialState = {
   loading: false,
   error: "",
   projectsDetails: {},
+};
+
+const getOneProjectInitialState = {
+  loading: true,
+  error: "",
+  projectDetails: {},
+};
+
+const updateProjectInitialState = {
+  loading: false,
+  error: "",
+  projectDetails: {},
+};
+
+const deleteProjectInitialState = {
+  loading: false,
+  error: "",
+  projectDetails: {},
 };
 
 const getAllProjectsReducer = (state, action) => {
@@ -63,6 +81,81 @@ const createNewProjectReducer = (state, action) => {
   }
 };
 
+const getOneProjectReducer = (state, action) => {
+  switch (action.type) {
+    case "ONEPROJECT_DATA_LOADING":
+      return {
+        ...state,
+        loading: true,
+      };
+    case "ONEPROJECT_DATA_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        projectDetails: action.payload,
+      };
+    case "ONEPROJECT_DATA_FAILURE":
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+
+    default:
+      return state;
+  }
+};
+
+const updateProjectReducer = (state, action) => {
+  switch (action.type) {
+    case "UPDATEPROJECT_LOADING":
+      return {
+        ...state,
+        loading: true,
+      };
+    case "UPDATEPROJECT_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        projectDetails: action.payload,
+      };
+    case "UPDATEPROJECT_FAILURE":
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+
+    default:
+      return state;
+  }
+};
+
+const deleteProjectReducer = (state, action) => {
+  switch (action.type) {
+    case "DELETEPROJECT_LOADING":
+      return {
+        ...state,
+        loading: true,
+      };
+    case "DELETEPROJECT_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        projectDetails: action.payload,
+      };
+    case "DELETEPROJECT_FAILURE":
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+
+    default:
+      return state;
+  }
+};
+
 const useGetAllProjects = () => {
   const [state, dispatch] = useReducer(getAllProjectsReducer, initialState);
 
@@ -92,7 +185,7 @@ const useCreateNewProject = () => {
   const createProject = async (newProject) => {
     dispatch({ type: "CREATEPROJECT_LOADING" });
     try {
-     const project = await save(newProject);
+      const project = await save(newProject);
       dispatch({ type: "CREATEPROJECT_SUCCESS", payload: project.data });
     } catch (error) {
       const payload = error.response ? error.response.data : error;
@@ -102,9 +195,72 @@ const useCreateNewProject = () => {
   return [newProjectState, createProject];
 };
 
+const useGetOneProject = (projectId) => {
+  const [state, dispatch] = useReducer(
+    getOneProjectReducer,
+    getOneProjectInitialState
+  );
+
+  useEffect(() => {
+    dispatch({ type: "ONEPROJECT_DATA_LOADING" });
+    const getOneProject = async () => {
+      try {
+        const project = await getOne(projectId);
+        dispatch({ type: "ONEPROJECT_DATA_SUCCESS", payload: project.data });
+      } catch (error) {
+        const payload = error.response ? error.response.data : error;
+        dispatch({ type: "ONEPROJECT_DATA_FAILURE", payload });
+      }
+    };
+    getOneProject();
+  }, [projectId]);
+
+  return state;
+};
+
+const useUpdateProject = () => {
+  const [updatedProject, dispatch] = useReducer(
+    updateProjectReducer,
+    updateProjectInitialState
+  );
+
+  const updateProject = async (projectId, projectData) => {
+    dispatch({ type: "UPDATEPROJECT_LOADING" });
+    try {
+      const project = await update(projectId, projectData);
+      dispatch({ type: "UPDATEPROJECT_SUCCESS", payload: project.data });
+    } catch (error) {
+      const payload = error.response ? error.response.data : error;
+      dispatch({ type: "UPDATEPROJECT_FAILURE", payload });
+    }
+  };
+  return [updatedProject, updateProject];
+};
+
+const useDeleteProject = () => {
+  const [deletedProject, dispatch] = useReducer(
+    deleteProjectReducer,
+    deleteProjectInitialState
+  );
+
+  const deleteProject = async (projectId) => {
+    dispatch({ type: "DELETEPROJECT_LOADING" });
+    try {
+      const response = await remove(projectId);
+
+      dispatch({ type: "DELETEPROJECT_SUCCESS", payload: response });
+    } catch (error) {
+      const payload = error.response ? error.response.data : error;
+      dispatch({ type: "DELETEPROJECT_FAILURE", payload });
+    }
+  };
+  return [deletedProject, deleteProject];
+};
+
 export {
   useGetAllProjects,
-  createNewProjectReducer,
-  createProjectInitialState,
-  useCreateNewProject
+  useCreateNewProject,
+  useGetOneProject,
+  useUpdateProject,
+  useDeleteProject,
 };
