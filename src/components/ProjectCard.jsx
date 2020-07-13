@@ -7,10 +7,11 @@ const ProjectCard = ({
   completedTasks,
   project,
   showDeleteModal,
+  reference
 }) => {
   const bgcolors = ["secondary", "info", "dark", "primary", "warning"];
   return (
-    <Col md={4} className="mt-3" key={project.id}>
+    <Col md={4} className="mt-3" key={project.id} ref={reference}>
       <Card
         style={{ height: "100%" }}
         border={bgcolors[Math.floor(Math.random() * (4 - 0 + 1)) + 0]}

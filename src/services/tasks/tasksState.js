@@ -149,7 +149,6 @@ const useDeletetask = () => {
       dispatch({ type: "DELETETASK_FAILURE", payload });
     }
   };
-  console.log(deletedTask);
   return [deletedTask, deleteTask];
 };
 

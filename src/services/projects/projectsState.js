@@ -5,6 +5,7 @@ const initialState = {
   loading: true,
   error: "",
   projectsDetails: {},
+  hasMore: false,
 };
 
 const createProjectInitialState = {
@@ -43,6 +44,7 @@ const getAllProjectsReducer = (state, action) => {
         ...state,
         loading: false,
         projectsDetails: action.payload,
+        hasMore: action.payload.total > action.payload.to,
       };
     case "ALLPROJECTS_DATA_FAILURE":
       return {
@@ -156,22 +158,30 @@ const deleteProjectReducer = (state, action) => {
   }
 };
 
-const useGetAllProjects = () => {
+const useGetAllProjects = (currentPage) => {
   const [state, dispatch] = useReducer(getAllProjectsReducer, initialState);
 
   useEffect(() => {
     dispatch({ type: "ALLPROJECTS_DATA_LOADING" });
     const getAllProjects = async () => {
       try {
-        const projects = await getAll();
-        dispatch({ type: "ALLPROJECTS_DATA_SUCCESS", payload: projects.data });
+        const projects = await getAll(currentPage);
+        dispatch({
+          type: "ALLPROJECTS_DATA_SUCCESS",
+          payload: state.projectsDetails.data
+            ? {
+                ...state,
+                data: state.projectsDetails.data.concat(projects.data.data),
+              }
+            : projects.data,
+        });
       } catch (error) {
         const payload = error.response ? error.response.data : error;
         dispatch({ type: "ALLPROJECTS_DATA_FAILURE", payload });
       }
     };
     getAllProjects();
-  }, []);
+  }, [currentPage]);
 
   return state;
 };

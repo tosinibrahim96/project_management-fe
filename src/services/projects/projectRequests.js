@@ -1,8 +1,8 @@
 import axios from "axios";
 const baseUrl = process.env.REACT_APP_BACKEND_BASEURL;
 
-const getAll = async () => {
-  const response = await axios.get(`${baseUrl}/projects`);
+const getAll = async (currentPage) => {
+  const response = await axios.get(`${baseUrl}/projects?page=${currentPage}`);
   return response.data;
 };
 

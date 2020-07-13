@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   useGetAllProjects,
   useCreateNewProject,
@@ -20,6 +20,7 @@ const Projects = () => {
   const [deletedProject, deleteProject] = useDeleteProject();
   const [showDeleteProject, setShowDeleteProject] = useState(false);
   const [dataKey, setDataKey] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [newProject, setNewProject] = useState({
     name: "",
@@ -28,7 +29,22 @@ const Projects = () => {
     amount_expected: "0",
   });
 
-  const data = useGetAllProjects();
+  const data = useGetAllProjects(currentPage);
+  const observer = useRef();
+  const lastProjectCardRef = useCallback(
+    (node) => {
+      if (data.loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && data.hasMore) {
+          setCurrentPage((currentPage) => currentPage + 1);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [data.loading, data.hasMore]
+  );
+
   const handleCloseAddProject = () => setShowAddProjectModal(false);
   const handleShowAddProject = () => setShowAddProjectModal(true);
   const handleCloseDeleteProject = () => setShowDeleteProject(false);
@@ -88,7 +104,7 @@ const Projects = () => {
     }
   };
 
-  if (data.loading) {
+  if (data.loading && currentPage===1) {
     return <Loader />;
   }
 
@@ -123,7 +139,7 @@ const Projects = () => {
           headerSize={1}
         />
         <Row className="mt-4">
-          {projects.map((project) => {
+          {projects.map((project, index) => {
             const completedPayment = isNaN(
               (project.last_payment.amount_received * 100) /
                 project.amount_expected
@@ -143,17 +159,31 @@ const Projects = () => {
                     (project.completed_tasks * 100) / project.total_tasks
                   );
 
-            return (
-              <ProjectCard
-                completedPayment={completedPayment}
-                completedTasks={completedTasks}
-                project={project}
-                key={project.id}
-                showDeleteModal={showDeleteModal}
-              />
-            );
+            if (projects.length === index + 1) {
+              return (
+                <ProjectCard
+                  completedPayment={completedPayment}
+                  completedTasks={completedTasks}
+                  project={project}
+                  key={project.id}
+                  showDeleteModal={showDeleteModal}
+                  reference={lastProjectCardRef}
+                />
+              );
+            } else {
+              return (
+                <ProjectCard
+                  completedPayment={completedPayment}
+                  completedTasks={completedTasks}
+                  project={project}
+                  key={project.id}
+                  showDeleteModal={showDeleteModal}
+                />
+              );
+            }
           })}
         </Row>
+        {data.loading && currentPage>1?<Loader />:<></>};
         <ModalContainer
           handleShow={showAddProjectModal}
           handleClose={handleCloseAddProject}
