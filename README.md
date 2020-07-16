@@ -3,7 +3,7 @@
 # Tasky
 > A project and task management app for anyone.
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/6b45750c-5c0d-41e2-a613-6a074eb86544/deploy-status)](https://app.netlify.com/sites/tasky-fe/deploys)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/18a08687-1d51-40ed-95bb-6267322ad85f/deploy-status)](https://app.netlify.com/sites/projectmanagement-sub1-test/deploys)
 
 
 ## Current Features
